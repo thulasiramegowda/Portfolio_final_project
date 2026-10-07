@@ -23,11 +23,20 @@ except Exception as e:
     model = None
 
 def preprocess_image(image_bytes):
+    # Load with PIL as RGB
     img = Image.open(io.BytesIO(image_bytes)).convert('RGB')
+    
+    # Resize to 160x160 using PIL (bilinear is fine)
     img = img.resize(IMG_SIZE)
-    img_array = np.array(img)
-    # The original notebook scales pixels to [0, 1]
-    img_array = img_array / 255.0
+    
+    # Convert to NumPy array
+    img_array = np.array(img, dtype=np.float32)
+    
+    # DO NOT scale by /255.0!
+    # The loaded helmet_detector.keras (MobileNetV2 Transfer Learning)
+    # has a built-in tf.keras.applications.mobilenet_v2.preprocess_input
+    # layer inside the model that expects [0, 255] RGB values.
+    
     # Add batch dimension
     img_array = np.expand_dims(img_array, axis=0)
     return img_array
@@ -48,14 +57,15 @@ def predict():
         
         # Predict
         predictions = model.predict(img_array, verbose=0)
-        # MobileNetV2 with binary crossentropy usually outputs a single probability
-        # 1 = helmet, 0 = no_helmet
+        
+        # Binary output: 1 = helmet, 0 = no_helmet
         score = float(predictions[0][0])
         
-        # The class index logic:
-        # If score > 0.5, it's 1 (helmet)
-        # Otherwise 0 (no_helmet)
-        if score > 0.5:
+        # Log to backend stdout
+        print(f"[ML] Input shape: {img_array.shape}")
+        print(f"[ML] Raw output: {score:.4f}")
+        
+        if score >= 0.5:
             class_id = 1
             label = "Helmet"
             confidence = score
@@ -65,6 +75,10 @@ def predict():
             label = "No Helmet"
             confidence = 1.0 - score
             class_name = "no_helmet"
+            
+        print(f"[ML] Class mapping: {class_id} -> {label}")
+        print(f"[ML] Prediction: {label}")
+        print(f"[ML] Confidence: {confidence:.4f}")
 
         return jsonify({
             "success": True,
