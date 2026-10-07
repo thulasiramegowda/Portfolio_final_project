@@ -1,86 +1,95 @@
-# SafetyVision
+# SafetyVision - Real-Time Helmet Detection System
 
-**Real-Time Helmet Detection using Computer Vision**
+SafetyVision is a complete web application built around an open-source machine learning model to detect whether a person is wearing a safety helmet in real-time. It uses a React frontend to capture webcam video, an Express Node.js backend to handle API requests, and a Python Flask service to run inference using a pre-trained MobileNetV2 model.
 
-SafetyVision is an AI-powered computer vision application designed to detect whether a person is wearing a safety helmet in real-time. It provides a professional dashboard for live camera inference, test case validation, and model performance tracking.
+## 🚀 Features
+- **Real-Time Detection:** Live webcam streaming with frame-by-frame inference.
+- **Microservice Architecture:** Clean separation of concerns (Frontend, Backend, ML Inference).
+- **Interactive UI:** Professional, polished computer-vision console.
+- **Model Telemetry:** View test case validations and performance metrics.
+- **Mock Mode:** A fully simulated development mode when Python dependencies are unavailable.
 
-## Overview
+## 🏗️ Architecture
+```
+Camera Feed 
+   ↓ 
+React Frontend (Vite, Tailwind)
+   ↓ 
+Node.js Express Backend API
+   ↓ 
+Python Flask Inference Service
+   ↓ 
+MobileNetV2 (helmet_detector.keras)
+   ↓ 
+Detection Result (Helmet / No Helmet, Confidence)
+```
 
-This project is built as a portfolio-quality demonstration of integrating machine learning models with a modern full-stack web application. The architecture is explicitly designed to decouple the frontend/backend application logic from the underlying machine learning training pipeline.
+## 🛠️ Technology Stack
+- **Frontend:** React, Vite, Tailwind CSS, Recharts, Lucide Icons
+- **Backend:** Node.js, Express, Axios, Form-Data
+- **Machine Learning:** Python, TensorFlow / Keras, Flask, Pillow, Numpy
 
-## Features
-
-- **Real-Time Detection:** Connects to webcam/video feeds and performs frame-by-frame inference.
-- **Model Evaluation Dashboard:** Visualizes training accuracy, validation loss, and class distributions.
-- **Standardized Test Cases:** Allows execution of predetermined test scenarios to validate model reliability.
-- **Dynamic Model Information:** Displays architecture, framework, and connection status.
-- **Modular Adapter Pattern:** The backend uses an adapter layer (`inferenceAdapter.js`) so that the ML inference model can be hot-swapped without affecting the web app.
-
-## Technology Stack
-
-- **Frontend:** React, Vite, Tailwind CSS, Recharts, Lucide React
-- **Backend:** Node.js, Express.js, Multer
-- **Machine Learning:** (In Progress) PyTorch/YOLO/TensorFlow depending on the ML team's final architecture.
-
-## Project Structure
-
+## 📂 Project Structure
 ```
 SafetyVision/
-├── frontend/             # React application (UI/UX, Video capture)
-├── backend/              # Express API (Routing, ML Adapter)
-│   └── src/
-│       └── ml/           # Integration point for ML inference
-└── ml/                   # ML teammate's workspace (datasets, training scripts, weights)
+├── frontend/             # React application (UI)
+├── backend/              # Express API (Orchestrator)
+├── ml/                   # Python Flask Inference service + Keras model
+├── data/                 # Sample images for testing
+└── README.md
 ```
 
-## Local Setup
+## ⚙️ Installation & How to Run
 
-### Prerequisites
-- Node.js (v18+)
-- npm or yarn
+You will need to run three separate terminal instances (one for each layer).
 
-### 1. Backend Setup
+### 1. Python ML Inference Service
+This service loads the `.keras` model into memory and exposes a fast `/predict` endpoint.
+```bash
+cd ml
+pip install -r requirements.txt
+python inference.py
+```
+*Runs on `http://localhost:5001`*
+
+### 2. Node.js Backend API
+This orchestrates the connections and serves data to the frontend.
 ```bash
 cd backend
 npm install
 npm run dev
 ```
-The backend will start on `http://localhost:5000`.
+*Runs on `http://localhost:5000`*
 
-### 2. Frontend Setup
+### 3. React Frontend
+This is the main user interface.
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-The frontend will start on `http://localhost:5173`.
+*Runs on `http://localhost:5173`*
 
-## Environment Variables
+## 🧪 Testing the Application
+- Open the application at `http://localhost:5173`.
+- Click **Start Camera** on the Home page.
+- Ensure the backend and Python service logs show incoming predictions.
+- View standard evaluations on the **Test Cases** page.
 
-### Backend (`backend/.env`)
-```
-PORT=5000
-VITE_USE_MOCK_ML=true
-```
+## 🔌 API Endpoints
+The backend exposes the following REST endpoints:
+- `GET /api/health` - Backend health check.
+- `GET /api/model/info` - Model configuration.
+- `GET /api/model/performance` - Training metrics.
+- `GET /api/model/distribution` - Class distribution.
+- `POST /api/predict` - Accepts `multipart/form-data` with a `frame` image file.
+- `POST /api/test-cases/:id/run` - Runs inference on a specific sample image.
 
-### Frontend (`frontend/.env`)
-```
-VITE_API_URL=http://localhost:5000/api
-```
+## 💡 Mock Mode
+If you want to run the UI without installing heavy TensorFlow dependencies, set `VITE_USE_MOCK_ML=true` in `backend/.env`. This will bypass the Python server and return simulated predictions with realistic latencies.
 
-## Development Mode
+## 📜 Open-Source Attribution
+This project uses the machine learning model and dataset preparation concepts from the open-source repository:
+[mo-geabel/helmet-detection](https://github.com/mo-geabel/helmet-detection)
 
-The backend includes a `VITE_USE_MOCK_ML=true` flag in its environment variables. When enabled, the `inferenceAdapter.js` will return simulated responses for predictions, test cases, and model performance. This allows the application team to build the entire system independently while the ML team finalizes model training.
-
-## Team Contributions
-
-This is a collaborative project:
-- **Application Engineering (Frontend/Backend):** Responsible for the UI, API, video capture, architecture, and the ML adapter interface.
-- **Machine Learning Engineering:** Responsible for dataset curation, model training, evaluation, and providing the final inference logic to be plugged into the adapter.
-
-## ML Integration (For the ML Teammate)
-
-When your model is ready:
-1. Place your model files (e.g., `best.pt`, `model.onnx`, or Python inference scripts) in the `ml/` directory.
-2. We will update `backend/src/ml/inferenceAdapter.js` to call your inference code (via Python child process, ONNX runtime, or HTTP microservice).
-3. Set `VITE_USE_MOCK_ML=false` in the backend `.env`.
+The original notebook (`helmet_detection.ipynb`) and trained `helmet_detector.keras` (MobileNetV2 Transfer Learning) serve as the foundation. The React/Node.js application, adapter architecture, real-time webcam integration, and API services were developed on top of it.
